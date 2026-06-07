@@ -2,28 +2,14 @@ import sqlite3
 import requests
 from bs4 import BeautifulSoup
 
-base_url="https://store.steampowered.com/app/"
-response=requests.get(base_url+str(3405340))
-#print(response.text)
+base_url = "https://store.steampowered.com/app/"
+headers = {"User-Agent": "Mozilla/5.0"}
 
-soup=BeautifulSoup(response.text,'html.parser')
-print(soup.prettify())
+def get_game_name(app_id):
+    response = requests.get(base_url + str(app_id), headers=headers)
+    soup = BeautifulSoup(response.text, 'html.parser')
+    game_name = soup.find(id='appHubAppName')
+    return game_name.get_text(strip=True) if game_name else "Unknown"
 
-
-
-
-
-
-con=sqlite3.connect("games.db")
-cur = con.cursor()
-cur.execute("CREATE TABLE games(game,id,price)")
-cur.execute("""
-            INSERT INTO games VALUES
-            ('dota 2',37,800),
-            ('genshin',22,1000)
-""")
-con.commit()
-
-
-for row in cur.execute("SELECT price,game,id FROM games ORDER BY price"):
-    print(row)
+#print(get_game_name(3405340))  
+#print(get_game_name(570))      
