@@ -29,7 +29,7 @@ jobs:
           restore-keys: games-db-
 
       - name: Run scraper
-        run: python fetch.py
+        run: python main.py
 
       - name: Upload db as artifact
         uses: actions/upload-artifact@v4
