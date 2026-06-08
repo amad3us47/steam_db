@@ -12,7 +12,7 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 270  # 4.5 hours (buffer for commit)
+    timeout-minutes: 270
 
     steps:
       - name: Checkout repo
