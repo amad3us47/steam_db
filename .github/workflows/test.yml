@@ -5,9 +5,14 @@ on:
   schedule:
     - cron: '0 0 * * *'
 
+concurrency:
+  group: scraper
+  cancel-in-progress: false
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    timeout-minutes: 270  # 4.5 hours (buffer for commit)
 
     steps:
       - name: Checkout repo
