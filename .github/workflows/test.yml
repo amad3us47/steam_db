@@ -1,39 +1,49 @@
-name: Steam Scraper
+name: Update Steam Games DB
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *'   # optional: adjust or remove
 
-concurrency:
-  group: scraper
-  cancel-in-progress: false
+permissions:
+  contents: write
 
 jobs:
-  scrape:
+  update-db:
     runs-on: ubuntu-latest
-    timeout-minutes: 270
-
-    permissions:
-      contents: write
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+      # This pulls the existing games.db from the repo, so the script
+      # below can pick up where it left off.
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install requests beautifulsoup4
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt   # adjust to your actual deps
 
-      - name: Run scraper
-        run: python test/main.py
+    - name: Run script (resumes from existing games.db)
+      run: |
+        python test/main.py             # replace with actual script name
 
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "Update games.db"
-          file_pattern: test/games.db
+    - name: Check for changes
+      id: check_changes
+      run: |
+        if [[ -n "$(git status --porcelain games.db)" ]]; then
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "has_changes=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Commit and push updated games.db
+      if: steps.check_changes.outputs.has_changes == 'true'
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git add games.db
+        git commit -m "Update games.db"
+        git pull --rebase
+        git push
