@@ -21,10 +21,6 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt   # adjust to your actual deps
-
     - name: Run script (resumes from existing games.db)
       run: |
         python test/main.py             # replace with actual script name
