@@ -1,4 +1,4 @@
-name: Steam Scraper
+name: Steam Scraper max
 on:
   workflow_dispatch:
   schedule:
