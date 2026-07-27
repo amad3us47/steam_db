@@ -27,12 +27,20 @@ def store_game(app_id, name):
     con.commit()
     con.close()
 
+MAX_RUNTIME_SECONDS = 250 * 60  # stop with time to spare before the workflow's 260-min step timeout
+
 if __name__ == "__main__":
     init_db()
     start = get_last_id()
     print(f"Resuming from ID: {start}")
 
+    run_start = time.time()
+
     for app_id in range(start, 10000000):
+        if time.time() - run_start > MAX_RUNTIME_SECONDS:
+            print(f"Time budget reached, stopping cleanly at ID {app_id}")
+            break
+
         try:
             name = get_game_name(app_id)
             if name != "Unknown":
