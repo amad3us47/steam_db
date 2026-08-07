@@ -36,4 +36,3 @@ python read.py    # print all stored games
 - One request per second (intentionally gentle).
 - `main.yml` is a legacy workflow referencing a missing `fetch.py`; `test.yml` is the one that actually runs.
 
-## License
