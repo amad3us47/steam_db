@@ -36,8 +36,8 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add test/games.db
-          git commit -m "Update games.db" || echo "No changes to commit"
+          git add test/games.db test/progress.txt
+          git commit -m "Update games.db and progress" || echo "No changes to commit"
           git pull --rebase
           git push
 

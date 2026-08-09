@@ -3,7 +3,9 @@ import sqlite3
 import time
 from parse import get_game_name
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "games.db")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "games.db")
+PROGRESS_PATH = os.path.join(BASE_DIR, "progress.txt")
 
 def init_db():
     con = sqlite3.connect(DB_PATH)
@@ -13,12 +15,17 @@ def init_db():
     con.close()
 
 def get_last_id():
-    con = sqlite3.connect(DB_PATH)
-    cur = con.cursor()
-    cur.execute("SELECT MAX(id) FROM games")
-    last_id = cur.fetchone()[0]
-    con.close()
-    return last_id if last_id is not None else 0
+    # Track progress in a separate file, independent of the games table.
+    # The games max id only moves when a hit is found; this counter advances on every id.
+    try:
+        with open(PROGRESS_PATH) as f:
+            return int(f.read().strip())
+    except (FileNotFoundError, ValueError):
+        return 0
+
+def set_last_id(app_id):
+    with open(PROGRESS_PATH, "w") as f:
+        f.write(str(app_id))
 
 def store_game(app_id, name):
     con = sqlite3.connect(DB_PATH)
@@ -29,9 +36,19 @@ def store_game(app_id, name):
 
 MAX_RUNTIME_SECONDS = 250 * 60  # stop with time to spare before the workflow's 260-min step timeout
 
+def seed_progress_if_missing():
+    # One-time bootstrap: if there's no progress file yet but games already exist,
+    # start from the highest known id instead of rescanning from zero.
+    if not os.path.exists(PROGRESS_PATH):
+        con = sqlite3.connect(DB_PATH)
+        max_id = con.execute("SELECT MAX(id) FROM games").fetchone()[0] or 0
+        con.close()
+        set_last_id(max_id)
+
 if __name__ == "__main__":
     init_db()
-    start = get_last_id()
+    seed_progress_if_missing()
+    start = get_last_id() + 1
     print(f"Resuming from ID: {start}")
 
     run_start = time.time()
@@ -48,6 +65,7 @@ if __name__ == "__main__":
                 print(f"✓ {app_id} → {name}")
             else:
                 print(f"✗ {app_id} → skipped")
+            set_last_id(app_id)
         except Exception as e:
             print(f"✗ {app_id} → error: {e}")
 
