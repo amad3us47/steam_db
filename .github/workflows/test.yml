@@ -2,11 +2,14 @@ name: Steam Scraper max
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *'   # daily safety net in case the self-chain ever breaks
 
 permissions:
   contents: write
 
+# Only one scraper runs at a time. cancel-in-progress: false makes a newly
+# triggered run wait (pending) until the current one finishes, so runs go
+# back-to-back instead of overlapping.
 concurrency:
   group: scraper
   cancel-in-progress: false
@@ -40,6 +43,17 @@ jobs:
           git commit -m "Update games.db and progress" || echo "No changes to commit"
           git pull --rebase
           git push
+
+      # Kick off the next run as soon as this one finishes, so scraping runs
+      # continuously back-to-back. Uses a PAT because the default GITHUB_TOKEN
+      # is not allowed to trigger another workflow run. Runs even if the
+      # scrape step errored, so the chain never stalls. concurrency (above)
+      # guarantees the queued run waits until this job fully completes.
+      - name: Trigger next run
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.CHAIN_PAT }}
+        run: gh workflow run test.yml --ref main
 
       - name: Fail job if scraper errored
         if: steps.scrape.outcome == 'failure'
