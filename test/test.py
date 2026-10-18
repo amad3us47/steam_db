@@ -9,7 +9,10 @@ def get_price():
     con=sqlite3.connect("games.db")
     cur=con.cursor()
     for row in cur.execute("SELECT id, name FROM games ORDER BY id"):
-        return row[0]
+        print(row[0])
+        #return row[0] // return should have been worked₹
+    con.close()
+
 response = requests.get(url, params=params, timeout=15)
 result = response.json()["2017080"]
 
